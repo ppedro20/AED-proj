@@ -5,11 +5,12 @@ library(clusterCrit)
 library(aricode)
 
 
-
 load("AEDPL.RData") 
 
 summary(AEDPL)
-sapply(AEDPL, function(x) sum(is.na(x)))
+# ha alguma maneira de fazer o count de na por coluna sem ter function(x)?
+colSums(is.na(AEDPL))
+
 # remove NAs do dataset original
 AEDPL <- na.omit(AEDPL)
 
