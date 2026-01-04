@@ -84,7 +84,7 @@ hc_m_ward <- analise_de_medidas_distancia("manhattan", "ward.D2")
 # divisao por k clusters
 metodo <- "euclidean"
 criteiro <- "ward.D2"
-d <- dist(aedl_s, method)
+d <- dist(aedl_s, metodo)
 hc <- analise_de_medidas_distancia(metodo, criteiro)
 rect.hclust(hc, 2, border="blue")
 rect.hclust(hc, 3, border="green")
