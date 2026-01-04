@@ -20,14 +20,15 @@ library(caret)
 # Nominal: Posicao
 # Ordinal: FaixaEtaria
 # Quantitativas: Minutos_Jogados, ExpectedGoals
-AEDPL <- premier_league_data
+load("AEDPL.RData")
+#AEDPL <- 
 
 View(AEDPL)
 str(AEDPL)
 names(AEDPL)
 dim(AEDPL)
 head(AEDPL)
-
+s
 ### Manipulação dos dados
 AEDPL$Nacionalidade <- substr(AEDPL$Nacionalidade, nchar(as.character(AEDPL$Nacionalidade))-2, nchar(as.character(AEDPL$Nacionalidade)))
 
@@ -285,6 +286,143 @@ fviz_pca_biplot(pca, fill.ind = AEDPL$FaixaEtaria, pointshape = 21, pointsize = 
 
 #######################################################
 ##### 3. Análise de clusters a todas as variáveis quantitativas da base de dados
+
+# dataset com variáveis quantitativas 
+aedl_quant <- AEDPL[, sapply(AEDPL, is.numeric)]
+
+summary(aedl_quant)
+
+# Estandardizar variáveis
+aedl_s <- as.data.frame(scale(aedl_quant))
+
+# ------------------------------------------------------
+# Tarefa: aplicação de um método hierárquico (apresentando o respetivo dendrograma) + justificação
+
+# Analise de varios distancias e metodos de ligação
+# euclidean
+
+analise_distancia_ligacao_dendograma <- function(df, metodo_distancia, criterio_ligacao){
+  d <- dist(df, method = metodo_distancia)
+  hc <- hclust(d, method = criterio_ligacao)
+  plot(hc, hang = -1,
+       main = paste("Dendrograma:" , metodo_distancia, "/", criterio_ligacao),
+       xlab = "", ylab = "Altura")
+  return (list(hc=hc, d=d))
+}
+
+# euclidean
+resultado <- analise_distancia_ligacao_dendograma(aedl_s,"euclidean", "single") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s,"euclidean", "average") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s, "euclidean", "complete") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s, "euclidean", "ward.D2") # ok 
+
+# manhattan
+resultado <- analise_distancia_ligacao_dendograma(aedl_s,"manhattan", "single") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s,"manhattan", "average") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "complete") # descartado 
+resultado <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2") # ok
+
+# euclidean vs manhattan: manhattan apresenta uma maior distancia (altura) entre os clusters formados
+# vai ser o escolhido
+
+resultado_analise_distancia_ligacao_dendograma <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2")
+hc <- resultados_analise_distancia_ligacao_dendograma$hc
+d <- resultados_analise_distancia_ligacao_dendograma$d
+
+
+analise_k_clusters <- function(hc, df,d, k){
+  clusters <- cutree(hc, k = k)
+  ch <- calinhara(df, clusters)
+  sil <- silhouette(clusters, d)
+  sil_med <- mean(sil[, 3])
+  print(paste("k =", k, "| Índice de Calinski-Harabasz =", round(ch,4), "|  Silhueta média =", round(sil_med,4)))
+  fviz_silhouette(sil) + ggtitle(paste("Silhueta para k =", k))
+  return (list(clusters=clusters, ch=ch, sil_med=sil_med, sil=sil))
+}
+
+analise_k_clusters(hc, aedl_s, d, 2)
+#> analise_k_clusters(hc, aedl_s, d, 2)
+#[1] "k = 2 | Índice de Calinski-Harabasz = 377.5835 ,|  Silhueta média = 0.441"
+#cluster size ave.sil.width
+#1       1  331          0.63
+#2       2  239          0.18
+fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=2)),
+             geom="point",
+             main="Cluster Plot para k = 2",
+             ellipse.type="norm",
+             palette="jco",
+             ggtheme=theme_minimal())
+
+analise_k_clusters(hc, aedl_s, d, 3)
+fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=3)),
+             geom="point",
+             main="Cluster Plot para k = 3",
+             ellipse.type="norm",
+             palette="jco",
+             ggtheme=theme_minimal())
+#> analise_k_clusters(hc, aedl_s, d, 3)
+#[1] "k = 3 | Índice de Calinski-Harabasz = 366.2858 ,|  Silhueta média = 0.4492"
+#cluster size ave.sil.width
+#1       1  331          0.58
+#2       2  181          0.25
+#3       3   58          0.33
+
+
+analise_k_clusters(hc, aedl_s, d, 4)
+fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=4)),
+             geom="point",
+             main="Cluster Plot para k = 3",
+             ellipse.type="norm",
+             palette="jco",
+             ggtheme=theme_minimal())
+#> analise_k_clusters(hc, aedl_s, d, 4)
+#[1] "k = 4 | Índice de Calinski-Harabasz = 296.3391 ,|  Silhueta média = 0.3588"
+#cluster size ave.sil.width
+#1       1  331          0.46
+#2       2   76          0.15
+#3       3  105          0.23
+#4       4   58          0.28
+
+# k = 2 apresenta um índice de Calinski-Harabasz ligeiramente superior, mas a silhueta média é inferior à de k = 3
+# k = 3 apresenta o melhor compromisso entre o índice de Calinski-Harabasz e a silhueta média de cada cluster está melhor
+# k = 4 apresenta valores inferiores para ambos os índices
+# Assim, a escolha recai sobre k = 3 clusters, que apresenta uma boa separação entre os clusters formados
+# e uma silhueta média aceitável, indicando que os pontos estão razoavelmente bem atribuídos aos seus clusters
+cluster3 <- analise_k_clusters(hc, aedl_s, d, 3)$clusters
+
+
+
+# ------------------------------------------------------
+# Tarefa: aplicação de um método não hierárquico (kmeans) + justificação
+
+set.seed(1234)
+
+# encontrar o numero de clusters
+fviz_nbclust(aedl_s, kmeans, method = "wss") # o cotovelo está no k= 3 
+fviz_nbclust(aedl_s, kmeans, method = "silhouette") # k = 3
+# ambos os métodos sugerem k = 3 como o número ideal de clusters
+
+km3 <- kmeans(aedl_s, centers = 3)
+fviz_cluster(km3, aedl_s, main=" ", ellipse.type="norm")
+
+# a escolha de k = 3 clusters é justificada pelos ssmetodos de wss e silhouette
+
+#------------------------------------------------------
+# Tarefa: comparação dos resultados obtidos com variáveis qualitativas (posição e faixa etaria)
+
+# ward.D2 k=3 cluster3
+table(AEDPL$FaixaEtaria, cluster3)
+ARI(AEDPL$FaixaEtaria, cluster3)
+
+table(AEDPL$Posicao, cluster3)
+ARI(AEDPL$Posicao, cluster3)
+
+# K-means k=3
+table(AEDPL$FaixaEtaria, km3$cluster)
+ARI(AEDPL$FaixaEtaria, km3$cluster)
+
+table(AEDPL$Posicao, km3$cluster)
+ARI(AEDPL$Posicao, km3$cluster)
 
 
 
