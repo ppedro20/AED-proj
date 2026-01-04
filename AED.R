@@ -18,7 +18,10 @@ library(DescTools)
 library(corrplot)
 library(psych)
 library(factoextra)
-
+library(fpc)
+library(cluster)
+library(clusterCrit)
+library(aricode)
 
 AEDPL <- premier_league_data
 save(AEDPL, file="AEDPL.RData")
@@ -329,8 +332,8 @@ resultado <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2"
 # vai ser o escolhido
 
 resultado_analise_distancia_ligacao_dendograma <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2")
-hc <- resultados_analise_distancia_ligacao_dendograma$hc
-d <- resultados_analise_distancia_ligacao_dendograma$d
+hc <- resultado_analise_distancia_ligacao_dendograma$hc
+d <- resultado_analise_distancia_ligacao_dendograma$d
 
 
 analise_k_clusters <- function(hc, df,d, k){
