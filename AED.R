@@ -23,8 +23,8 @@ library(cluster)
 library(clusterCrit)
 library(aricode)
 
-AEDPL <- premier_league_data
-save(AEDPL, file="AEDPL.RData")
+#AEDPL <- premier_league_data
+#save(AEDPL, file="AEDPL.RData")
 load("AEDPL.RData")
 
 #######################################################
