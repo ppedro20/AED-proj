@@ -13,6 +13,12 @@ library(ggplot2)
 library(car)
 library(moments)
 library(caret)
+library(e1071)
+library(DescTools)
+library(corrplot)
+library(psych)
+library(factoextra)
+
 
 AEDPL <- premier_league_data
 save(AEDPL, file="AEDPL.RData")
@@ -205,7 +211,6 @@ print(chisq.test(tab_indep, correct = FALSE))
 print(fisher.test(tab_indep, simulate.p.value = TRUE))
 
 # Medidas de associação
-library(DescTools)
 print(ContCoef(tab_indep))
 print(CramerV(tab_indep))
 
@@ -235,7 +240,6 @@ print(cor(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "kendall"))
 print(cor.test(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "kendall"))
 
 # Visualização da matriz de correlação
-library(corrplot)
 M <- cor(AEDPL[, c("Minutos_Jogados", "ExpectedGoals")])
 corrplot(M, type = "lower")
 corrplot(M, type = "lower", addCoef.col = "black")
@@ -250,20 +254,17 @@ AED_quant <- AEDPL[, 5:18]
 
 # Análise da correlação
 M_corr <- cor(AED_quant)
-library(corrplot)
 corrplot(M_corr, type = "lower")
 corrplot(M_corr, type = "lower", addCoef.col = "black")
 
 
 # Índice KMO
-library(psych)
 KMO(AED_quant)
 
 
 ### Fundamentação do número de componentes utilizadas, com referência à variância explicada
 pca <- princomp(AED_quant, cor=TRUE)
 summary(pca)
-library(factoextra)
 fviz_eig(pca, addlabels=TRUE)
 
 
@@ -292,7 +293,6 @@ fviz_pca_biplot(pca, fill.ind = AEDPL$FaixaEtaria, pointshape = 21, pointsize = 
 
 # dataset com variáveis quantitativas 
 aedl_quant <- AEDPL[, sapply(AEDPL, is.numeric)]
-
 summary(aedl_quant)
 
 # Estandardizar variáveis
