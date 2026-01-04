@@ -14,21 +14,19 @@ library(car)
 library(moments)
 library(caret)
 
+AEDPL <- premier_league_data
+save(AEDPL, file="AEDPL.RData")
+load("AEDPL.RData")
+
 #######################################################
 ##### 1. Análise exploratória geral da base de dados
-### Variaveis escolhidas:
-# Nominal: Posicao
-# Ordinal: FaixaEtaria
-# Quantitativas: Minutos_Jogados, ExpectedGoals
-load("AEDPL.RData")
-#AEDPL <- 
 
 View(AEDPL)
 str(AEDPL)
 names(AEDPL)
 dim(AEDPL)
 head(AEDPL)
-s
+
 ### Manipulação dos dados
 AEDPL$Nacionalidade <- substr(AEDPL$Nacionalidade, nchar(as.character(AEDPL$Nacionalidade))-2, nchar(as.character(AEDPL$Nacionalidade)))
 
@@ -45,6 +43,11 @@ colSums(is.na(AEDPL))
 AEDPL <- na.omit(AEDPL)
 
 ### Apresentação de tabelas, gráficos e medidas adequadas ao resumo da informação das 4 variáveis escolhidas para análise 
+### Variaveis escolhidas:
+# Nominal: Posicao
+# Ordinal: FaixaEtaria
+# Quantitativas: Minutos_Jogados, ExpectedGoals
+
 ## Variável Nominal: Posicao
 # Tabela de Frequências
 freq_abs_pos <- table(AEDPL$Posicao)
