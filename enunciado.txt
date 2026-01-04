@@ -1,0 +1,140 @@
+Formulário de Análise Exploratória de Dados
+Mestrado em Ciência de Dados
+Seja DF um data.frame, x uma variável quantitativa e f um fator (variável qualitativa nominal ou ordinal) de DF,
+e VL um valor lógico (TRUE ou FALSE).
+• Manipulação de dados
+– DF <- data.frame(x1, x2, f1, f2, . . . )
+– DF$f <- factor(DF$f, labels=c(. . . ))
+– DF$f <- ordered(DF$f, levels=c(. . . ), labels=c(. . . ))
+– Classes: DF$x_classes <- cut(DF$x, breaks=. . . , right=VL, labels=c(. . . ),
+dig.lab = . . . , include.lowest = VL)
+– str(DF); names(DF); View(DF); DF <- edit(DF)
+– dim(DF); ncol(DF); nrow(DF); head(DF); tail(DF)
+– attach(DF); detach(DF)
+– save(DF, file=". . . .Rdata"); load(". . . .Rdata")
+– Valores omissos: is.na(DF); sum(is.na(DF)); colSums(is.na(DF))
+rowSums(is.na(DF)); DF <- na.omit(DF)
+• Outras funções
+– Vetores: c(. . . ); seq(. . . , . . . , . . . ); seq(. . . , . . . , length.out=. . . ); rep(. . . , . . . )
+– length(DF$x); sort(DF$x); order(DF$x); unique(DF$x)
+– range(DF$x); min(DF$x); which.min(DF$x); max(DF$x); which.max(DF$x)
+– round(. . . , digits = . . . ); abs(DF$x); which(condição)
+– tapply(DF$x, DF$f, função); sapply(DF, função)
+• Tabela de frequências
+– table(DF$f); levels(DF$f); rev(table(DF$f)); table(DF$f1, DF$f2)
+– prop.table(table(DF$f)); prop.table(table(DF$f1, DF$f2))
+• Representação gráfica(1)
+– Diagrama de barras: barplot(table(DF$f), main=" ", xlab=" ", ylab=" ", col=. . . )
+barplot(tapply(DF$x,DF$f,função), main=" ", xlab=" ", ylab=" ", col=. . . )
+– Diagrama circular: pie(table(DF$f), main=" ", col=. . . )
+– Histograma: hist(DF$x, breaks=. . . , main=" ", xlab=" ", ylab=" ", col=. . . )
+– Boxplot: boxplot(DF$x, main=". . . ", xlab=" ", ylab=" ", col=. . . , horizontal=VL)
+– Diagrama de dispersão: plot(DF$x1,DF$x2, main=" ", xlab=" ", ylab=" ", col=. . . )
+– Diagramas de dispersão: pairs(DF[,c(. . . )])
+– QQ-plot: library(car); qqPlot(DF$x, main=" ", xlab=" ", ylab=" ")
+– Vários gráficos: par(mfrow=c(. . . ,. . . )); . . . ; par(mfrow=c(1,1))
+• Medidas de estatística descritiva
+– mean(DF$x); mean(DF$x, trim=0.05); median(DF$x); sum(DF$x)
+– var(DF$x); sd(DF$x), IQR(DF$x); mad(DF$x, center=mean(DF$x))
+– summary(DF$x); quantile(DF$x); quantile(DF$x, probs = . . . )
+– library(moments); skewness(DF$x)
+– boxplot.stats(DF$x)
+1 Para criar n cores pode ser utilizado: rainbow(n), gray.colors(n), heat.colors(n). Para consultar informação sobre o package ggplot2, que permite a construção de variados tipos de gráficos, consulte
+https://rstudio.github.io/cheatsheets/data-visualization.pdf.
+Formulário de Análise Exploratória de Dados Mestrado em Ciência de Dados 1
+• Inferência estatística(2)
+– Testes de normalidade
+* shapiro.test(DF$x)
+– Média(s) de populações normais
+* 1 amostra: t.test(DF$x, mu = µ0, alternative = . . . , conf.level = . . . )
+* 2 amostras independentes: t.test(DF$x ∼ DF$f, alternative = . . . ,
+var.equal = VL, conf.level = . . . )
+* 2 amostras emparelhadas: t.test(DF$x1, DF$x2, alternative = . . . ,
+conf.level = . . . , paired = TRUE)
+* k amostras independentes (k ≥ 2): oneway.test(DF$x ∼ DF$f, var.equal = VL)
+Todos os pares: pairwise.t.test(DF$x, DF$f)
+– Medianas (localização dos dados)
+* 1 amostra: library(DescTools); SignTest(DF$x, mu = Me0, alternative = . . . ,
+conf.level = . . . )
+* 2 amostras independentes: wilcox.test(DF$x ∼ DF$f, alternative = . . . , exact=VL)
+* 2 amostras emparelhadas: wilcox.test(DF$x1, DF$x2, alternative = . . . , exact=VL,
+paired = TRUE)
+* k amostras independentes (k ≥ 2): kruskal.test(DF$x ∼ DF$f)
+Todos os pares: pairwise.wilcox.test(DF$x, DF$f, exact=VL)
+– Proporção de sucesso
+* 1 proporção: binom.test(table(DF$f), p = p0, alternative= . . . ,
+conf.level= . . . )
+* 1 proporção (n ≥ 30, np0 ≥ 5 e n (1 − p0) ≥ 5): prop.test(table(DF$f), p = p0,
+alternative= . . . , conf.level= . . . , correct = VL)
+* k proporções (com k ≥ 2, n ≥ 30 e nϕi ≥ 5 para i = 1, · · · , k): chisq.test(table(DF$f),
+p = c(ϕ1, . . . , ϕk), correct = VL)
+– Variâncias (comparação de k variâncias, com k ≥ 2)
+* 2 amostras normais: var.test(DF$x ∼ DF$f, alternative= . . . , conf.level=. . . )
+* k amostras normais (com k ≥ 2): bartlett.test(DF$x ∼ DF$f)
+* k amostras (com k ≥ 2): library(car); leveneTest(DF$x ∼ DF$f,
+center= c("mean","median"))
+– Teste de independência
+* fisher.test(table(DF$f1, DF$f2))
+* fisher.test(table(DF$f1, DF$f2), simulate.p.value = TRUE)
+* eij : chisq.test(table(DF$f1, DF$f2))$expected
+* eij ≥ 5, ∀i, j: chisq.test(table(DF$f1, DF$f2), correct=VL)
+– Associação e correlação entre variáveis
+* library(DescTools);ContCoef(table(DF$f1, DF$f2));
+CramerV(table(DF$f1, DF$f2)); Phi(table(DF$f1, DF$f2))
+* cor(DF[,c(. . . )], method = c("pearson", "kendall", "spearman"))
+* library(corrplot); corrplot(cor(. . . ), type = "lower", addCoef.col = . . . )
+* cor.test(DF$x1, DF$x2, alternative = . . . , conf.level = . . . ,
+method = c("pearson", "kendall", "spearman"))
+• funcao <- function(x){. . . ; a=. . . ; return(a)}
+• if (condição) {instrução}; if (condição) {instrução 1} else {instrução 2}
+• for (i in vetor) {instrução(i)}
+• while (condição){instrução}
+2 O argumento alternative pode ser escolhido entre: "two.sided", "greater" e "less".
+Formulário de Análise Exploratória de Dados Mestrado em Ciência de Dados 2
+• Análise fatorial(3)
+– library(psych); KMO(DF)
+< 0.50 0.50 − 0.60 0.60 − 0.70 0.70 − 0.80 0.80 − 0.90 0.90 − 1.00
+KMO Inaceitável Má Razoável Média Boa Muito boa
+– pca <- princomp(DF, cor=VL); summary(pca);
+– plot(pca); biplot(pca); library(factoextra); fviz_eig(pca, addlabels=VL)
+– fviz_pca_ind(pca, col.ind = "cos2", gradient.cols = c("blue", "yellow",
+"red"), legend.title = " ")
+– fviz_pca_var(pca, col.var = "contrib", gradient.cols = c("blue", "yellow",
+"red"), repel = TRUE, legend.title = " ")
+– fviz_pca_biplot(pca)
+– fviz_pca_biplot(pca, fill.ind = DF$class, pointshape = 21, pointsize = 2,
+addEllipses = TRUE, legend.title = " ")
+• Análise de clusters
+– Estandardizar variáveis: scale(DF); DF2 <- as.data.frame(scale(DF))
+– library(factoextra); fviz_nbclust(DF2, kmeans, method = "(4)")
+– km <- kmeans(DF2, k); print(km)
+– fviz_cluster(km, DF2, main=" ", ellipse.type="norm")
+– library(cluster); fviz_silhouette(silhouette(km$cluster, dist(DF2)))
+– library(clusterCrit); intCriteria(as.matrix(DF2), km$cluster,"(5)")
+– library(fpc); calinhara(DF2, km$cluster)
+– concordance(as.integer(DF$class), km$cluster)
+– library(clusterCrit); extCriteria(as.integer(DF$Class), km$cluster, "(6)")
+– table(DF$class, km$cluster); library(aricode); ARI(DF$class, km$cluster)
+– d <- dist(DF2, "(7)")
+– hc = hclust(d,method="(8)")
+– DF$cluster <- cutree(hc, k)
+– plot(hc, hang=-1); rect.hclust(hc, k, border="red")
+– library(dendextend); dend <- as.dendrogram(hc);
+labels_colors(dend) <- as.integer(DF$class[hc$order]);
+plot(dend, cex.lab=1.3, xlab=" ", ylab=" ", sub=" ", main=" ");
+rect.hclust(hc, k, border="blue")
+– fviz_dend(hc, k, ylab=" ", main=" ", k_colors = c("blue", "brown", . . . ),
+label_cols = as.integer(DF$class[hc$order]), cex = 0.6)
+• Classificação naive Bayes
+– library(e1071); NBC <- naiveBayes(DF[,...], DF$Class)
+– NBC.prob <- predict(NBC, DF[,...], type="raw")
+– NBC.class <- predict(NBC, DF[,...])
+– library(caret); confusionMatrix(NBC.class, DF$Class)
+– set.seed(número); s <- sample(1:nrow(DF));
+Treino <- s[1:floor(0.75*nrow(DF))]
+3 Todos os gráficos começados por fviz_ necessitam do package factoextra.
+4 O argumento pode ser escolhido entre: "wss", "silhouette", . . .
+5 O argumento pode ser escolhido entre: "Calinski_Harabasz", "Silhouette", . . .
+6 O argumento pode ser escolhido entre: "Precision", "recall", "Folkes_Mallows", "Rand", . . .
+7 Pode ser escolhido entre: "euclidean", "maximum", "manhattan", "minkowski", p= , . . .
+8 Pode ser escolhido entre: "ward.D2", "single", "average", "complete", "centroid", . . .

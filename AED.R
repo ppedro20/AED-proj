@@ -2,181 +2,294 @@
 # Análise Exploratória de Dados
 # Mestrado em Ciência de Dados - 1º Ano (2025/2026)
 
-# Identificação
 # José Almeida  - 2021122872
-# Hugo Lopes    - 
-# Pedro Pedro   -
+# Hugo Lopes    - 2025112531
+# Pedro Pedro   - 2020120970
 
 #######################################################
 set.seed(123)
 
 library(ggplot2)
 library(car)
-library(e1071)
+library(moments)
 library(caret)
 
-load("AEDPL.RData")
 #######################################################
-##### Análise Estatistica 1
+##### 1. Análise exploratória geral da base de dados
+### Variaveis escolhidas:
+# Nominal: Posicao
+# Ordinal: FaixaEtaria
+# Quantitativas: Minutos_Jogados, ExpectedGoals
+AEDPL <- premier_league_data
 
+View(AEDPL)
 str(AEDPL)
 names(AEDPL)
 dim(AEDPL)
 head(AEDPL)
 
-# Preparação dos dados
+### Manipulação dos dados
+AEDPL$Nacionalidade <- substr(AEDPL$Nacionalidade, nchar(as.character(AEDPL$Nacionalidade))-2, nchar(as.character(AEDPL$Nacionalidade)))
+
+AEDPL$Posicao <- substr(as.character(AEDPL$Posicao), 1, 2)
 AEDPL$Posicao <- factor(AEDPL$Posicao)
 
 AEDPL$FaixaEtaria <- ordered(
   AEDPL$FaixaEtaria,
-  levels = c("<=20","21-24","25-28","29-32",">33")
+  levels = c("≤20","21-24","25-28","29-32","33+")
 )
 
-# Valores omissos
+### Análise à existência de observações omissas
 colSums(is.na(AEDPL))
+AEDPL <- na.omit(AEDPL)
 
-### Variaveis escolhidas:
-# Nominal: Posicao
-# Ordinal: FaixaEtaria
-# Quantitativas: Minutos_Jogados, ExpectedGoals
+### Apresentação de tabelas, gráficos e medidas adequadas ao resumo da informação das 4 variáveis escolhidas para análise 
+## Variável Nominal: Posicao
+# Tabela de Frequências
+freq_abs_pos <- table(AEDPL$Posicao)
+freq_rel_pos <- prop.table(freq_abs_pos) * 100
+cbind(Absoluta = freq_abs_pos, Relativa = round(freq_rel_pos, 2))
 
-### Variavel qualitativa nominal: Posicao
-table_pos <- table(AEDPL$Posicao)
-table_pos
-prop.table(table_pos)
+# Moda
+moda_pos <- names(freq_abs_pos)[which.max(freq_abs_pos)]
+cat("Moda (Posicao):", moda_pos, "\n")
 
-# Intervalos de confiança (95%) para proporções
-#prop.test(table_pos , conf.level = 0.95)
-
+# Gráfico de Barras
 ggplot(AEDPL, aes(x = Posicao)) +
-  geom_bar() +
-  labs(
-    title = "Distribuição dos Jogadores por Posição",
-    x = "Posição",
-    y = "Frequência"
-  ) +
+  geom_bar(fill = "steelblue") +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) +
+  labs(title = "Distribuição de Jogadores por Posição", x = "Posição", y = "Frequência") +
   theme_minimal()
 
-### Variavel qualitativa ordinal: FaixaEtaria
-table_fe <- table(AEDPL$FaixaEtaria)
-table_fe
-prop.table(table_fe)
+## Variável Ordinal: FaixaEtaria
+# Tabela de Frequências
+freq_abs_etaria <- table(AEDPL$FaixaEtaria)
+freq_rel_etaria <- prop.table(freq_abs_etaria) * 100
+cbind(Absoluta = freq_abs_etaria, Relativa = round(freq_rel_etaria, 2))
 
+# Moda e Mediana (para variável ordinal codificada como fator ordenado, a mediana pode ser obtida via índices ou as.numeric)
+moda_etaria <- names(freq_abs_etaria)[which.max(freq_abs_etaria)]
+cat("Moda (FaixaEtaria):", moda_etaria, "\n")
+
+# Mediana
+mediana_idx <- median(as.numeric(AEDPL$FaixaEtaria), na.rm = TRUE)
+mediana_etaria <- levels(AEDPL$FaixaEtaria)[mediana_idx]
+cat("Mediana (FaixaEtaria):", mediana_etaria, "\n")
+
+# Gráfico de Barras
 ggplot(AEDPL, aes(x = FaixaEtaria)) +
-  geom_bar() +
-  labs(
-    title = "Distribuição dos Jogadores por Faixa Etária",
-    x = "Faixa Etária",
-    y = "Frequência"
-  ) +
+  geom_bar(fill = "darkorange") +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) +
+  labs(title = "Distribuição de Jogadores por Faixa Etária", x = "Faixa Etária", y = "Frequência") +
   theme_minimal()
 
-### Variavel Quantitativa: Minutos_Jogados
-summary(AEDPL$Minutos_Jogados)
-mean(AEDPL$Minutos_Jogados, na.rm = TRUE)
-median(AEDPL$Minutos_Jogados, na.rm = TRUE)
-sd(AEDPL$Minutos_Jogados, na.rm = TRUE)
-IQR(AEDPL$Minutos_Jogados, na.rm = TRUE)
+## Variáveis Quantitativas: Minutos_Jogados, ExpectedGoals
+# Função auxiliar para medidas descritivas
+calc_medidas <- function(x) {
+  c(
+    Media = mean(x, na.rm = TRUE),
+    Mediana = median(x, na.rm = TRUE),
+    DesvioPadrao = sd(x, na.rm = TRUE),
+    Minimo = min(x, na.rm = TRUE),
+    Maximo = max(x, na.rm = TRUE),
+    Q1 = quantile(x, 0.25, na.rm = TRUE),
+    Q3 = quantile(x, 0.75, na.rm = TRUE),
+    Coef_Assimetria = skewness(x, na.rm = TRUE)
+  )
+}
+
+## Minutos Jogados
+print("Medidas Descritivas - Minutos Jogados:")
+print(calc_medidas(AEDPL$Minutos_Jogados))
 
 # Histograma
 ggplot(AEDPL, aes(x = Minutos_Jogados)) +
-  geom_histogram(bins = 30) +
-  labs(
-    title = "Histograma dos Minutos Jogados",
-    x = "Minutos Jogados",
-    y = "Frequência"
-  ) +
+  geom_histogram(bins = 30, fill = "forestgreen", color = "black") +
+  labs(title = "Histograma - Minutos Jogados", x = "Minutos Jogados", y = "Frequência") +
   theme_minimal()
 
 # Boxplot
 ggplot(AEDPL, aes(y = Minutos_Jogados)) +
-  geom_boxplot() +
-  labs(
-    title = "Boxplot dos Minutos Jogados",
-    y = "Minutos Jogados"
-  ) +
+  geom_boxplot(fill = "forestgreen", color = "black") +
+  labs(title = "Boxplot - Minutos Jogados", y = "Minutos Jogados") +
   theme_minimal()
 
-# Normalidade
-shapiro.test(AEDPL$Minutos_Jogados)
+## Expected Goals
+print("Medidas Descritivas - Expected Goals:")
+print(calc_medidas(AEDPL$ExpectedGoals))
 
-# QQ-plot
-qqPlot(AEDPL$Minutos_Jogados,
-       main = "QQ-plot – Minutos Jogados")
-
-### Variável quantitativa: ExpectedGoals
-summary(AEDPL$ExpectedGoals)
-mean(AEDPL$ExpectedGoals, na.rm = TRUE)
-median(AEDPL$ExpectedGoals, na.rm = TRUE)
-sd(AEDPL$ExpectedGoals, na.rm = TRUE)
-IQR(AEDPL$ExpectedGoals, na.rm = TRUE)
-
+# Histograma
 ggplot(AEDPL, aes(x = ExpectedGoals)) +
-  geom_histogram(bins = 30) +
-  labs(
-    title = "Histograma do Expected Goals",
-    x = "Expected Goals",
-    y = "Frequência"
-  ) +
+  geom_histogram(bins = 30, fill = "purple", color = "black") +
+  labs(title = "Histograma - Expected Goals", x = "Expected Goals", y = "Frequência") +
   theme_minimal()
 
+# Boxplot
 ggplot(AEDPL, aes(y = ExpectedGoals)) +
-  geom_boxplot() +
-  labs(
-    title = "Boxplot do Expected Goals",
-    y = "Expected Goals"
-  ) +
+  geom_boxplot(fill = "purple", color = "black") +
+  labs(title = "Boxplot - Expected Goals", y = "Expected Goals") +
   theme_minimal()
 
-shapiro.test(AEDPL$ExpectedGoals)
-
-qqPlot(AEDPL$ExpectedGoals,
-       main = "QQ-plot – Expected Goals")
-
-### Comparação das quantitativas por Faixa Etária
-# Boxplots
-ggplot(AEDPL, aes(x = FaixaEtaria, y = Minutos_Jogados)) +
-  geom_boxplot() +
-  labs(
-    title = "Minutos Jogados por Faixa Etária",
-    x = "Faixa Etária",
-    y = "Minutos Jogados"
-  ) +
-  theme_minimal()
-
-ggplot(AEDPL, aes(x = FaixaEtaria, y = ExpectedGoals)) +
-  geom_boxplot() +
-  labs(
-    title = "Expected Goals por Faixa Etária",
-    x = "Faixa Etária",
-    y = "Expected Goals"
-  ) +
-  theme_minimal()
-
-# Teste não paramétrico (k ≥ 2)
-kruskal.test(Minutos_Jogados ~ FaixaEtaria, data = AEDPL)
-kruskal.test(ExpectedGoals ~ FaixaEtaria, data = AEDPL)
-
-### Associação entre variáveis qualitativas
-tab_assoc <- table(AEDPL$Posicao, AEDPL$FaixaEtaria)
-tab_assoc
-
-chisq.test(tab_assoc)
-
-### Correlação entre variáveis quantitativas
-cor(AEDPL[, c("Minutos_Jogados", "ExpectedGoals")],
-    method = "spearman",
-    use = "complete.obs")
-
-cor.test(
-  AEDPL$Minutos_Jogados,
-  AEDPL$ExpectedGoals,
-  method = "spearman",
-  conf.level = 0.95
-)
 
 
-### Classificação Naive Bayes
+### Apresentação de intervalos com 95% de confiança para a percentagem de indivíduos em cada categoria da variável nominal
+for (nivel in levels(AEDPL$Posicao)) {
+  print(nivel)
+  print(binom.test(sum(AEDPL$Posicao == nivel), nrow(AEDPL)))
+}
+
+
+
+### Análise se alguma das duas variáveis quantitativas escolhidas pode ser caracterizada por uma distribuição normal
+## Variável: Minutos_Jogados
+# Teste de Shapiro-Wilk
+print("Teste de Normalidade (Shapiro-Wilk) - Minutos Jogados:")
+print(shapiro.test(AEDPL$Minutos_Jogados))
+
+# QQ-Plot
+qqPlot(AEDPL$Minutos_Jogados, main="QQ-Plot - Minutos Jogados", xlab="Quantis Teóricos", ylab="Quantis Observados")
+
+## Variável: ExpectedGoals
+# Teste de Shapiro-Wilk
+print("Teste de Normalidade (Shapiro-Wilk) - Expected Goals:")
+print(shapiro.test(AEDPL$ExpectedGoals))
+
+# QQ-Plot
+qqPlot(AEDPL$ExpectedGoals, main="QQ-Plot - Expected Goals", xlab="Quantis Teóricos", ylab="Quantis Observados")
+
+
+
+### Comparação dos valores observados nas duas variáveis quantitativas nas diferentes categorias
+### da variável ordinal, incluindo uma comparação da sua variabilidade em cada categoria, bem
+### como do seu valor médio
+# Para Minutos_Jogados
+print("Minutos_Jogados por FaixaEtaria (Média):")
+print(tapply(AEDPL$Minutos_Jogados, AEDPL$FaixaEtaria, mean))
+print("Minutos_Jogados por FaixaEtaria (Desvio Padrão):")
+print(tapply(AEDPL$Minutos_Jogados, AEDPL$FaixaEtaria, sd))
+
+boxplot(AEDPL$Minutos_Jogados ~ AEDPL$FaixaEtaria, 
+        main = "Minutos Jogados por Faixa Etaria",
+        xlab = "Faixa Etaria", 
+        ylab = "Minutos Jogados",
+        col = "forestgreen")
+
+# Para ExpectedGoals
+print("ExpectedGoals por FaixaEtaria (Média):")
+print(tapply(AEDPL$ExpectedGoals, AEDPL$FaixaEtaria, mean))
+print("ExpectedGoals por FaixaEtaria (Desvio Padrão):")
+print(tapply(AEDPL$ExpectedGoals, AEDPL$FaixaEtaria, sd))
+
+boxplot(AEDPL$ExpectedGoals ~ AEDPL$FaixaEtaria, 
+        main = "Expected Goals por Faixa Etaria",
+        xlab = "Faixa Etaria", 
+        ylab = "Expected Goals",
+        col = "purple")
+
+
+
+### Análise da independência/associação entre as duas variáveis qualitativas 
+# Tabela de frequências
+tab_indep <- table(AEDPL$Posicao, AEDPL$FaixaEtaria)
+print(tab_indep)
+
+# Valores esperados
+print(chisq.test(tab_indep)$expected)
+
+# Testes de hipóteses
+print(chisq.test(tab_indep, correct = FALSE))
+print(fisher.test(tab_indep, simulate.p.value = TRUE))
+
+# Medidas de associação
+library(DescTools)
+print(ContCoef(tab_indep))
+print(CramerV(tab_indep))
+
+
+
+### Análise da correlação entre as duas variáveis quantitativas escolhidas
+# Diagrama de dispersão
+plot(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, 
+     main = "Dispersão: Minutos Jogados vs Expected Goals", 
+     xlab = "Minutos Jogados", ylab = "Expected Goals", 
+     col = "blue")
+
+# Coeficientes de correlação e Testes de Hipóteses
+# Pearson
+print("Correlação de Pearson:")
+print(cor(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "pearson"))
+print(cor.test(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "pearson"))
+
+# Spearman
+print("Correlação de Spearman:")
+print(cor(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "spearman"))
+print(cor.test(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "spearman"))
+
+# Kendall
+print("Correlação de Kendall:")
+print(cor(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "kendall"))
+print(cor.test(AEDPL$Minutos_Jogados, AEDPL$ExpectedGoals, method = "kendall"))
+
+# Visualização da matriz de correlação
+library(corrplot)
+M <- cor(AEDPL[, c("Minutos_Jogados", "ExpectedGoals")])
+corrplot(M, type = "lower")
+corrplot(M, type = "lower", addCoef.col = "black")
+
+
+
+#######################################################
+##### 2. Análise fatorial em componentes principais a todas as variáveis quantitativas da base de dados
+
+### Análise da correlação entre as variáveis e do índice KMO (Kaiser-Meyer-Olkin)
+AED_quant <- AEDPL[, 5:18]
+
+# Análise da correlação
+M_corr <- cor(AED_quant)
+library(corrplot)
+corrplot(M_corr, type = "lower")
+corrplot(M_corr, type = "lower", addCoef.col = "black")
+
+
+# Índice KMO
+library(psych)
+KMO(AED_quant)
+
+
+### Fundamentação do número de componentes utilizadas, com referência à variância explicada
+pca <- princomp(AED_quant, cor=TRUE)
+summary(pca)
+library(factoextra)
+fviz_eig(pca, addlabels=TRUE)
+
+
+### Apresentação de gráficos que ilustrem as conclusões, avaliando se as componentes principais
+### permitem distinguir os indivíduos das diferentes categorias de cada uma das duas variáveis
+### qualitativas utilizadas na primeira questão
+
+# Para a variável Posicao
+fviz_pca_biplot(pca, fill.ind = AEDPL$Posicao, pointshape = 21, pointsize = 2,
+                addEllipses = TRUE, legend.title = "Posicao")
+
+fviz_pca_biplot(pca, fill.ind = AEDPL$Posicao, pointshape = 21, pointsize = 2,
+                addEllipses = TRUE, legend.title = "Posicao", label = "var")
+
+# Para a variável FaixaEtaria
+fviz_pca_biplot(pca, fill.ind = AEDPL$FaixaEtaria, pointshape = 21, pointsize = 2,
+                addEllipses = TRUE, legend.title = "FaixaEtaria")
+
+fviz_pca_biplot(pca, fill.ind = AEDPL$FaixaEtaria, pointshape = 21, pointsize = 2,
+                addEllipses = TRUE, legend.title = "FaixaEtaria", label = "var")
+                
+
+
+#######################################################
+##### 3. Análise de clusters a todas as variáveis quantitativas da base de dados
+
+
+
+#######################################################
+##### 4. Aplicação do algoritmo de classificação Naïve Bayes
 # Dividir em treino (80%) e teste(20%)
 set.seed(123)
 s <- sample(1:nrow(AEDPL))
