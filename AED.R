@@ -309,10 +309,11 @@ aedl_s <- as.data.frame(scale(aedl_quant))
 analise_dendograma <- function(df, metodo_distancia, criterio_ligacao){
   d <- dist(df, method = metodo_distancia)
   hc <- hclust(d, method = criterio_ligacao)
-  # media global da silhueta
+  #png(paste("Dendrograma_", criterio_ligacao, "_", metodo_distancia , ".png", sep=""), width = 600, height = 300)
   plot(hc, hang = -1,
        main = paste("Dendrograma:" , metodo_distancia, "/", criterio_ligacao),
-       xlab = "", ylab = "Altura")
+       xlab = "", ylab = "Altura",)
+  #dev.off()
 }
 
 # euclidean
@@ -334,6 +335,14 @@ metodo_distancia <- "euclidean"
 criterio_ligacao <- "ward.D2"
 d <- dist(aedl_s, method = metodo_distancia)
 hc <- hclust(d, method = criterio_ligacao)
+# cortar dendograma em 2, 3, 4, 5 clusters
+plot(hc, hang = -1,
+     main = paste("Dendrograma:" , metodo_distancia, "/", criterio_ligacao),
+     xlab = "", ylab = "Altura",)
+rect.hclust(hc, k = 2, border = "red")
+rect.hclust(hc, k = 3, border = "blue")
+rect.hclust(hc, k = 4, border = "green")
+rect.hclust(hc, k = 5, border = "purple")
 
 # Identificação do número de clusters (k) com base na Silhueta e de Calinski-Harabasz
 
@@ -345,11 +354,11 @@ analise_k_clusters <- function(hc, df,d, k){
   print(paste("k =", k, "| Índice de Calinski-Harabasz =", round(ch,4), "|  Silhueta média =", round(sil_med,4)))
   fviz_silhouette(sil) + ggtitle(paste("Silhueta para k =", k))
 }
+
 # testar k = 2, 3, 4
 analise_k_clusters(hc, aedl_s, d, 2) # silhueta média: 0.3925
 analise_k_clusters(hc, aedl_s, d, 3) # 0.405
 analise_k_clusters(hc, aedl_s, d, 4) # 0.2484
-
 
 k <- 3
 cluster3 <- cutree(hc, k = k)
@@ -357,16 +366,6 @@ fviz_cluster(list(data = aedl_s, cluster = cluster3),
              geom = "point", 
              ellipse.type = "norm",
              main = paste("Clusters Hierárquicos - k =", k))
-
-
-
-# k = 2 apresenta um índice de Calinski-Harabasz ligeiramente superior, mas a silhueta média é inferior à de k = 3
-# k = 3 tem uma silhueta média superior e a a silhueta de cada cluster é melhor
-# k = 4 apresenta valores inferiores para ambos os índices
-# Assim, a escolha recai sobre k = 3 clusters, que apresenta uma boa separação entre os clusters formados
-# e uma silhueta média aceitável, indicando que os pontos estão razoavelmente bem atribuídos aos seus clusters
-
-
 
 # ------------------------------------------------------
 # Tarefa: aplicação de um método não hierárquico (kmeans) + justificação
@@ -378,7 +377,21 @@ fviz_nbclust(aedl_s, kmeans, method = "wss") # o cotovelo está no k= 3
 fviz_nbclust(aedl_s, kmeans, method = "silhouette") # k = 3
 # ambos os métodos sugerem k = 3 como o número ideal de clusters
 
+km2 <- kmeans(aedl_s, centers = 2)
+sil2 <- silhouette(km2$cluster, d)
+fviz_silhouette(sil2) + ggtitle("Silhueta K-means k = 2")
+summary(sil2)
+
 km3 <- kmeans(aedl_s, centers = 3)
+sil3 <- silhouette(km3$cluster, d)
+fviz_silhouette(sil3) + ggtitle("Silhueta K-means k = 3")
+summary(sil3)
+
+km4 <- kmeans(aedl_s, centers = 4)
+sil4 <- silhouette(km4$cluster, d)
+fviz_silhouette(sil4) + ggtitle("Silhueta K-means k = 4")
+summary(sil4)
+
 fviz_cluster(km3, aedl_s, geom = "point", 
              ellipse.type = "norm",
              main = paste("Clusters K-means com k =", k))
