@@ -1,0 +1,71 @@
+# sapply(aedl_quant, mean)
+
+#Idade Minutos_Jogados   Jogos_Jogados           Golos    Assistencias   ExpectedGoals ExpectedAssists         Remates 
+#25.098246     1317.175439       20.270175        1.898246        1.410526        1.932281        1.427193       17.129825 
+#RematesNoAlvo          Passes PassesCompletos        Desarmes  Interceptacoes    Recuperacoes 
+#5.761404        9.580702      528.282456       23.452632       10.584211       55.415789 
+
+# sapply(aedl_quant, sd)
+
+#Idade Minutos_Jogados   Jogos_Jogados           Golos    Assistencias   ExpectedGoals ExpectedAssists         Remates 
+#4.450568     1051.895105       12.189078        3.546849        2.258332        3.183803        1.966087       21.803177 
+#RematesNoAlvo          Passes PassesCompletos        Desarmes  Interceptacoes    Recuperacoes 
+#8.505095        9.984064      504.617375       24.400410       12.425840       51.258065 
+
+
+# Tarefa: aplicação de um método hierárquico (apresentando o respetivo dendrograma) + justificação
+
+# escolha do método de distância e do critério hierárquico
+# o objetivo é conseguir ter cluster com uma boa separação entre clusters e uma boa coesão dentro dos clusters
+# para isso vamos testar diferentes combinações de métodos de distância e critérios hierárquicos
+# e avaliar os resultados com o índice de Calinski-Harabasz e o índice de Silhueta média
+
+# ward.D2 vs complete vs average vs single
+# ward.D2: minimiza a variância dentro dos clusters, criando grupos compactos
+# complete: usa a distância máxima entre pontos de diferentes clusters, tendendo a criar clusters mais esféricos
+# average: usa a distância média entre pontos de diferentes clusters, equilibrando entre
+# single: usa a distância mínima entre pontos de diferentes clusters, podendo criar clusters alongados
+
+# cluster hierárquico
+# é possivel ver-se uma divisao entre 2 grupos, mas a divisao em 3 grupos nao é muito clara,
+# temos um cluster completamente dominante e dois clusters pequenos
+
+
+# ha uma melhor separação entre os clusters, tanto para 2 como para 3 clusters
+# para 4 clusters ja começa haver uma sobreposição maior
+
+# ward.D2 é o critério que melhor se adequa aos dados, pois cria clusters mais compactos e bem separados
+# quando comparado com os outros critérios testados
+
+
+# avg global: 0.39, avg cluster1: 0.52, avg cluster2: 0.15
+# o cluster 2 apresenta uma silhouette muito baixa, o que indica que os pontos deste cluster estao mal atribuídos
+# o cluster 1 apresenta uma silhouette boa, o que indica que os pontos deste cluster estao bem atribuídos
+
+# em termos de calinhara tanto k=2 e k=3 apresentam valores muito proximos 
+# em termos de silhouette quando temos k=2 vemos que todo o cluster 2 esta abaixo da media 
+# com k=2 tambem vemos que a media da silhouette do cluster 2 é de 0.15 (muito baixo)
+# com k=3 vemos que o cluster 2 e 3 ja apresentam resultados acima da media global da silhouetta
+# embora tambem nao tenham uma silhouetta boa (cluster2 = 0.29, cluster3=0.32)
+# comparando k=2 e k=3, k=3 apresenta uma estrutura melhor
+
+
+# Tarefa: aplicação de um método não hierárquico (kmeans) + justificação
+
+k=2
+# "Rácio de Separação (quanto maior melhor): 0.4141"
+# "Dispersão intra clusters: 3150.67157786437, 1516.69998225208"
+# "Total da dispersão intra clusters: 4667.37156011645"
+# "Dispersão inter clusters: 3298.62843988355"
+# Dimensão dos clusters: 207, 363"
+# K-means clustering with 2 clusters of sizes 207, 363
+
+k=3
+#"Rácio de Separação (quanto maior melhor): 0.5738"
+#"Dispersão intra clusters: 1243.50862154221, 792.989209189692, 1358.95015625505"
+#"Total da dispersão intra clusters: 3395.44798698696"
+#"Dispersão inter clusters: 4570.55201301304"
+#"Dimensão dos clusters: 162, 62, 346"
+#K-means clustering with 3 clusters of sizes 162, 62, 346
+
+k=4
