@@ -304,37 +304,38 @@ aedl_s <- as.data.frame(scale(aedl_quant))
 # ------------------------------------------------------
 # Tarefa: aplicação de um método hierárquico (apresentando o respetivo dendrograma) + justificação
 
-# Analise de varios distancias e metodos de ligação
-# euclidean
-
-analise_distancia_ligacao_dendograma <- function(df, metodo_distancia, criterio_ligacao){
+# Analise comparativa de varios metodos de calculo de distancia
+# e de varios metodos de ligação com base em dendogramas
+analise_dendograma <- function(df, metodo_distancia, criterio_ligacao){
   d <- dist(df, method = metodo_distancia)
   hc <- hclust(d, method = criterio_ligacao)
+  # media global da silhueta
   plot(hc, hang = -1,
        main = paste("Dendrograma:" , metodo_distancia, "/", criterio_ligacao),
        xlab = "", ylab = "Altura")
-  return (list(hc=hc, d=d))
 }
 
 # euclidean
-resultado <- analise_distancia_ligacao_dendograma(aedl_s,"euclidean", "single") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s,"euclidean", "average") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s, "euclidean", "complete") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s, "euclidean", "ward.D2") # ok 
+analise_dendograma(aedl_s,"euclidean", "single") # descartado 
+analise_dendograma(aedl_s,"euclidean", "average") # descartado 
+analise_dendograma(aedl_s, "euclidean", "complete") # descartado 
+analise_dendograma(aedl_s, "euclidean", "ward.D2") # ok 
 
 # manhattan
-resultado <- analise_distancia_ligacao_dendograma(aedl_s,"manhattan", "single") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s,"manhattan", "average") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "complete") # descartado 
-resultado <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2") # ok
+analise_dendograma(aedl_s,"manhattan", "single") # descartado 
+analise_dendograma(aedl_s,"manhattan", "average") # descartado 
+analise_dendograma(aedl_s, "manhattan", "complete") # descartado 
+analise_dendograma(aedl_s, "manhattan", "ward.D2") # ok
 
-# euclidean vs manhattan: manhattan apresenta uma maior distancia (altura) entre os clusters formados
-# vai ser o escolhido
+# ward.D2 é o melhor a definir a distancia entre clusters 
+# como o que foi escolhido foi ward entao a distancia entre individuos é a euclidean 
 
-resultado_analise_distancia_ligacao_dendograma <- analise_distancia_ligacao_dendograma(aedl_s, "manhattan", "ward.D2")
-hc <- resultado_analise_distancia_ligacao_dendograma$hc
-d <- resultado_analise_distancia_ligacao_dendograma$d
+metodo_distancia <- "euclidean"
+criterio_ligacao <- "ward.D2"
+d <- dist(aedl_s, method = metodo_distancia)
+hc <- hclust(d, method = criterio_ligacao)
 
+# Identificação do número de clusters (k) com base na Silhueta e de Calinski-Harabasz
 
 analise_k_clusters <- function(hc, df,d, k){
   clusters <- cutree(hc, k = k)
@@ -343,58 +344,27 @@ analise_k_clusters <- function(hc, df,d, k){
   sil_med <- mean(sil[, 3])
   print(paste("k =", k, "| Índice de Calinski-Harabasz =", round(ch,4), "|  Silhueta média =", round(sil_med,4)))
   fviz_silhouette(sil) + ggtitle(paste("Silhueta para k =", k))
-  return (list(clusters=clusters, ch=ch, sil_med=sil_med, sil=sil))
 }
-
-analise_k_clusters(hc, aedl_s, d, 2)
-#> analise_k_clusters(hc, aedl_s, d, 2)
-#[1] "k = 2 | Índice de Calinski-Harabasz = 377.5835 ,|  Silhueta média = 0.441"
-#cluster size ave.sil.width
-#1       1  331          0.63
-#2       2  239          0.18
-fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=2)),
-             geom="point",
-             main="Cluster Plot para k = 2",
-             ellipse.type="norm",
-             palette="jco",
-             ggtheme=theme_minimal())
-
-analise_k_clusters(hc, aedl_s, d, 3)
-fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=3)),
-             geom="point",
-             main="Cluster Plot para k = 3",
-             ellipse.type="norm",
-             palette="jco",
-             ggtheme=theme_minimal())
-#> analise_k_clusters(hc, aedl_s, d, 3)
-#[1] "k = 3 | Índice de Calinski-Harabasz = 366.2858 ,|  Silhueta média = 0.4492"
-#cluster size ave.sil.width
-#1       1  331          0.58
-#2       2  181          0.25
-#3       3   58          0.33
+# testar k = 2, 3, 4
+analise_k_clusters(hc, aedl_s, d, 2) # silhueta média: 0.3925
+analise_k_clusters(hc, aedl_s, d, 3) # 0.405
+analise_k_clusters(hc, aedl_s, d, 4) # 0.2484
 
 
-analise_k_clusters(hc, aedl_s, d, 4)
-fviz_cluster(list(data=aedl_s, cluster=cutree(hc, k=4)),
-             geom="point",
-             main="Cluster Plot para k = 3",
-             ellipse.type="norm",
-             palette="jco",
-             ggtheme=theme_minimal())
-#> analise_k_clusters(hc, aedl_s, d, 4)
-#[1] "k = 4 | Índice de Calinski-Harabasz = 296.3391 ,|  Silhueta média = 0.3588"
-#cluster size ave.sil.width
-#1       1  331          0.46
-#2       2   76          0.15
-#3       3  105          0.23
-#4       4   58          0.28
+k <- 3
+cluster3 <- cutree(hc, k = k)
+fviz_cluster(list(data = aedl_s, cluster = cluster3), 
+             geom = "point", 
+             ellipse.type = "norm",
+             main = paste("Clusters Hierárquicos - k =", k))
+
+
 
 # k = 2 apresenta um índice de Calinski-Harabasz ligeiramente superior, mas a silhueta média é inferior à de k = 3
-# k = 3 apresenta o melhor compromisso entre o índice de Calinski-Harabasz e a silhueta média de cada cluster está melhor
+# k = 3 tem uma silhueta média superior e a a silhueta de cada cluster é melhor
 # k = 4 apresenta valores inferiores para ambos os índices
 # Assim, a escolha recai sobre k = 3 clusters, que apresenta uma boa separação entre os clusters formados
 # e uma silhueta média aceitável, indicando que os pontos estão razoavelmente bem atribuídos aos seus clusters
-cluster3 <- analise_k_clusters(hc, aedl_s, d, 3)$clusters
 
 
 
@@ -409,9 +379,12 @@ fviz_nbclust(aedl_s, kmeans, method = "silhouette") # k = 3
 # ambos os métodos sugerem k = 3 como o número ideal de clusters
 
 km3 <- kmeans(aedl_s, centers = 3)
-fviz_cluster(km3, aedl_s, main=" ", ellipse.type="norm")
+fviz_cluster(km3, aedl_s, geom = "point", 
+             ellipse.type = "norm",
+             main = paste("Clusters K-means com k =", k))
 
-# a escolha de k = 3 clusters é justificada pelos ssmetodos de wss e silhouette
+
+# a escolha de k = 3 clusters é justificada pelos metodos de wss e silhouette
 
 #------------------------------------------------------
 # Tarefa: comparação dos resultados obtidos com variáveis qualitativas (posição e faixa etaria)
@@ -429,8 +402,6 @@ ARI(AEDPL$FaixaEtaria, km3$cluster)
 
 table(AEDPL$Posicao, km3$cluster)
 ARI(AEDPL$Posicao, km3$cluster)
-
-
 
 #######################################################
 ##### 4. Aplicação do algoritmo de classificação Naïve Bayes
