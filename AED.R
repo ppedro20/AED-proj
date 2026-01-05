@@ -421,28 +421,29 @@ ARI(AEDPL$Posicao, km3$cluster)
 # Dividir em treino (80%) e teste(20%)
 set.seed(123)
 s <- sample(1:nrow(AEDPL))
-Treino <- s[1:floor(0.80*nrow(AEDPL))]
+Treino <- s[1:floor(0.8*nrow(AEDPL))]
 AEDTreino <- AEDPL[Treino,]
 AEDTeste <- AEDPL[-Treino,]
+AEDTreino_Num <- AEDTreino[,sapply(AEDTreino, is.numeric)]
 
 # Classificar variável 'Posicao':
 # Estimar o modelo com a amostra de treino
-NBCPos <- naiveBayes(AEDTreino[,5:18], AEDTreino$Posicao)
+NBCPos <- naiveBayes(AEDTreino_Num, AEDTreino$Posicao)
 
 # Classificação na amostra de teste
-NBCPos.prob <- predict(NBCPos, AEDTeste[,5:18], type="raw")
-NBCPos.class <- predict(NBCPos, AEDTeste[,5:18])
+NBCPos.prob <- predict(NBCPos, AEDTeste, type="raw")
+NBCPos.class <- predict(NBCPos, AEDTeste)
 
 # Matriz de confusão - avaliação de fiabilidade da classificação da amostra de testes
 confusionMatrix(NBCPos.class, AEDTeste$Posicao, mode="prec_recall")
 
 # Classificar variável 'FaixaEtaria':
 # Estimar o modelo com a amostra de treino
-NBCFE <- naiveBayes(AEDTreino[,5:18], AEDTreino$FaixaEtaria)
+NBCFE <- naiveBayes(AEDTreino_Num, AEDTreino$FaixaEtaria)
 
 # Classificação na amostra de teste
-NBCFE.prob <- predict(NBCFE, AEDTeste[,5:18], type="raw")
-NBCFE.class <- predict(NBCFE, AEDTeste[,5:18])
+NBCFE.prob <- predict(NBCFE, AEDTeste, type="raw")
+NBCFE.class <- predict(NBCFE, AEDTeste)
 
 # Matriz de confusão - avaliação de fiabilidade da classificação da amostra de testes
 confusionMatrix(NBCFE.class, AEDTeste$FaixaEtaria, mode="prec_recall")
